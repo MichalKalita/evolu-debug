@@ -1,9 +1,12 @@
 import {
   NonEmptyString,
+  NonEmptyString1000,
   SimpleName,
+  SqliteBoolean,
   Uint8Array as Uint8ArrayType,
   createEvolu,
   id,
+  maxLength,
   nullOr,
   type EvoluSchema,
   union,
@@ -17,6 +20,9 @@ import { EvoluDebugSchemaContext } from '../context'
 import TableDetail from './TableDetail.vue'
 
 const DebugRowId = id('DebugRow')
+const TodoId = id('Todo')
+const TodoCategoryId = id('TodoCategory')
+const NonEmptyString50 = maxLength(50)(NonEmptyString)
 
 const schema = {
   debugRow: {
@@ -177,5 +183,116 @@ describe('TableDetail (browser, real Evolu)', () => {
 
     await waitFor(() => wrapper.text().includes('from-second-table'))
     expect(wrapper.text()).toContain('from-second-table')
+  })
+
+  it('inserts a new row through schema-driven form', async () => {
+    const evolu = createTestEvolu(String(Date.now() + 2).slice(-8))
+
+    const wrapper = mount(TableDetail, {
+      props: { tableName: 'debugRow' },
+      global: {
+        provide: {
+          [EvoluContext as symbol]: evolu,
+          [EvoluDebugSchemaContext as symbol]: schema,
+        },
+      },
+    })
+
+    cleanup = () => wrapper.unmount()
+
+    await waitFor(() => wrapper.text().includes('Add Row'))
+
+    await wrapper.get('[data-testid="insert-title"]').setValue('inserted-row')
+    await wrapper.get('[data-testid="insert-mode"]').setValue('high')
+    await wrapper.get('[data-testid="insert-blob"]').setValue('A4DE')
+    await wrapper.get('form.insert-grid').trigger('submit')
+
+    await waitFor(() => wrapper.text().includes('Row inserted.'))
+    await waitFor(() => wrapper.text().includes('inserted-row'))
+
+    expect(wrapper.text()).toContain('inserted-row')
+    expect(wrapper.text()).toContain('0xA4DE (2 B)')
+  })
+
+  it('supports todo + todoCategory insert flow with reference select and null option', async () => {
+    const todoSchema = {
+      todo: {
+        id: TodoId,
+        title: NonEmptyString1000,
+        isCompleted: nullOr(SqliteBoolean),
+        categoryId: nullOr(TodoCategoryId),
+        priority: union('low', 'high'),
+      },
+      todoCategory: {
+        id: TodoCategoryId,
+        name: NonEmptyString50,
+      },
+    } satisfies EvoluSchema
+
+    const evolu = createEvolu(evoluWebDeps)(todoSchema, {
+      name: SimpleName.orThrow(`evtodo${String(Date.now() + 3).slice(-8)}`),
+    })
+
+    const categoryWrapper = mount(TableDetail, {
+      props: { tableName: 'todoCategory' },
+      global: {
+        provide: {
+          [EvoluContext as symbol]: evolu,
+          [EvoluDebugSchemaContext as symbol]: todoSchema,
+        },
+      },
+    })
+
+    cleanup = () => categoryWrapper.unmount()
+
+    await waitFor(() => categoryWrapper.text().includes('Add Row'))
+    await categoryWrapper.get('[data-testid="insert-name"]').setValue('Work')
+    await categoryWrapper.get('form.insert-grid').trigger('submit')
+    await waitFor(() => categoryWrapper.text().includes('Work'))
+
+    categoryWrapper.unmount()
+
+    const todoWrapper = mount(TableDetail, {
+      props: { tableName: 'todo' },
+      global: {
+        provide: {
+          [EvoluContext as symbol]: evolu,
+          [EvoluDebugSchemaContext as symbol]: todoSchema,
+        },
+      },
+    })
+
+    cleanup = () => todoWrapper.unmount()
+
+    await waitFor(() => todoWrapper.text().includes('Add Row'))
+
+    const categorySelect = todoWrapper.get('[data-testid="insert-categoryId"]')
+    await waitFor(() => categorySelect.findAll('option').length >= 2)
+
+    const optionLabels = categorySelect.findAll('option').map((option) => option.text())
+    expect(optionLabels).toContain('null')
+    expect(optionLabels).toContain('Work')
+
+    await todoWrapper.get('[data-testid="insert-title"]').setValue('Buy milk')
+    await todoWrapper.get('[data-testid="insert-priority"]').setValue('high')
+    await categorySelect.setValue('')
+    await todoWrapper.get('form.insert-grid').trigger('submit')
+
+    await waitFor(() => todoWrapper.text().includes('Buy milk'))
+    expect(todoWrapper.text()).toContain('Buy milk')
+
+    const categoryValue = categorySelect
+      .findAll('option')
+      .find((option) => option.text() === 'Work')
+      ?.element.getAttribute('value')
+    expect(categoryValue).toBeTruthy()
+
+    await todoWrapper.get('[data-testid="insert-title"]').setValue('Read docs')
+    await todoWrapper.get('[data-testid="insert-priority"]').setValue('low')
+    await categorySelect.setValue(categoryValue as string)
+    await todoWrapper.get('form.insert-grid').trigger('submit')
+
+    await waitFor(() => todoWrapper.text().includes('Read docs'))
+    expect(todoWrapper.text()).toContain('Read docs')
   })
 })

@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { String, brand, optional, union } from '@evolu/common'
 import {
+  buildInsertFields,
   formatCell,
   formatSchemaType,
   getRuntimeValueType,
   inferColumnDataType,
   isBinaryObject,
+  parseInsertFieldValue,
   sortTables,
   splitTables,
   type RowData,
@@ -113,5 +115,140 @@ describe('formatSchemaType', () => {
     RecursiveUnion.members = [RecursiveUnion]
 
     expect(formatSchemaType(RecursiveUnion)).toBe('[Recursive]')
+  })
+})
+
+describe('insert field helpers', () => {
+  it('builds insert field definitions from schema columns', () => {
+    const fields = buildInsertFields({
+      id: { name: 'Brand', parentType: { name: 'String' } },
+      title: { name: 'String' },
+      categoryId: {
+        name: 'Union',
+        members: [
+          { name: 'Null' },
+          {
+            name: 'Brand',
+            brand: 'TodoCategoryId',
+            parentType: { name: 'String' },
+          },
+        ],
+      },
+      projectId: { name: 'Id', table: 'Project' },
+      priority: {
+        name: 'Union',
+        members: [
+          { name: 'Literal', expected: 'low' },
+          { name: 'Literal', expected: 'high' },
+        ],
+      },
+      done: { name: 'SqliteBoolean' },
+      attachment: {
+        name: 'Union',
+        members: [{ name: 'Null' }, { name: 'Uint8Array' }],
+      },
+    })
+
+    expect(fields.map((field) => field.name)).toEqual([
+      'title',
+      'categoryId',
+      'projectId',
+      'priority',
+      'done',
+      'attachment',
+    ])
+
+    expect(fields.find((field) => field.name === 'categoryId')?.type).toBe('select')
+    expect(fields.find((field) => field.name === 'categoryId')?.referenceTable).toBe(
+      'todoCategory',
+    )
+    expect(fields.find((field) => field.name === 'categoryId')?.required).toBe(false)
+    expect(fields.find((field) => field.name === 'projectId')?.type).toBe('select')
+    expect(fields.find((field) => field.name === 'projectId')?.referenceTable).toBe('project')
+    expect(fields.find((field) => field.name === 'priority')?.type).toBe('select')
+    expect(fields.find((field) => field.name === 'priority')?.options).toEqual(['low', 'high'])
+    expect(fields.find((field) => field.name === 'done')?.type).toBe('checkbox')
+    expect(fields.find((field) => field.name === 'attachment')?.type).toBe('hex')
+    expect(fields.find((field) => field.name === 'attachment')?.required).toBe(false)
+  })
+
+  it('parses insert field values based on field types', () => {
+    expect(
+      parseInsertFieldValue(
+        {
+          name: 'count',
+          type: 'number',
+          required: true,
+          options: [],
+          referenceTable: null,
+        },
+        '42',
+      ),
+    ).toBe(42)
+
+    expect(
+      parseInsertFieldValue(
+        {
+          name: 'isDone',
+          type: 'checkbox',
+          required: true,
+          options: [],
+          referenceTable: null,
+        },
+        true,
+      ),
+    ).toBe(1)
+
+    expect(
+      parseInsertFieldValue(
+        {
+          name: 'isDone',
+          type: 'checkbox',
+          required: true,
+          options: [],
+          referenceTable: null,
+        },
+        false,
+      ),
+    ).toBe(0)
+
+    expect(
+      parseInsertFieldValue(
+        {
+          name: 'attachment',
+          type: 'hex',
+          required: false,
+          options: [],
+          referenceTable: null,
+        },
+        'A4DE',
+      ),
+    ).toEqual(new Uint8Array([164, 222]))
+
+    expect(
+      parseInsertFieldValue(
+        {
+          name: 'title',
+          type: 'text',
+          required: false,
+          options: [],
+          referenceTable: null,
+        },
+        '',
+      ),
+    ).toBeNull()
+
+    expect(
+      parseInsertFieldValue(
+        {
+          name: 'isCompleted',
+          type: 'select',
+          required: false,
+          options: ['0', '1'],
+          referenceTable: null,
+        },
+        '0',
+      ),
+    ).toBe(0)
   })
 })

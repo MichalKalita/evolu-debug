@@ -6,6 +6,7 @@ import { EvoluDebugSchemaContext } from '../context'
 import type { RowData } from '../lib/utils'
 import TableDataGrid from './TableDataGrid.vue'
 import TableDetailHeader from './TableDetailHeader.vue'
+import TableInsertForm from './TableInsertForm.vue'
 import TableSchemaGrid from './TableSchemaGrid.vue'
 
 const props = defineProps<{
@@ -27,6 +28,10 @@ const currentTableSchema = computed(() => {
   const schemaRecord = schema as Record<string, Record<string, unknown>>
   return schemaRecord[props.tableName] ?? null
 })
+
+const canInsertRows = computed(
+  () => currentTableSchema.value !== null && !props.tableName.startsWith('evolu_'),
+)
 
 const tableQuery = evolu.createQuery((db) =>
   (db as unknown as { selectFrom: (table: string) => any })
@@ -60,13 +65,12 @@ void tableQueryPromise
     <p v-if="isLoading">Loading rows...</p>
     <p v-else-if="loadError">Failed to load rows: {{ loadError }}</p>
 
-    <TableSchemaGrid
-      v-else-if="selectedView === 'schema'"
-      :columns="currentTableSchema"
-      :rows="tableRows"
-    />
+    <TableSchemaGrid v-else-if="selectedView === 'schema'" :columns="currentTableSchema" :rows="tableRows" />
 
-    <TableDataGrid v-else :rows="tableRows" />
+    <template v-else>
+      <TableInsertForm v-if="canInsertRows && currentTableSchema" :table-name="props.tableName" :schema-columns="currentTableSchema" />
+      <TableDataGrid :rows="tableRows" />
+    </template>
   </div>
 </template>
 
