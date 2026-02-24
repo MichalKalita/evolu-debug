@@ -2,6 +2,7 @@
 import type { Evolu } from '@evolu/common'
 import { computed, inject, onMounted, ref } from 'vue'
 import { EvoluDebugEvoluContext } from '../context'
+import { sortTables, splitTables } from '../lib/utils'
 
 const props = defineProps<{
   selectedTable: string | null
@@ -22,13 +23,9 @@ const isLoading = ref(true)
 const loadError = ref<string | null>(null)
 const tables = ref<string[]>([])
 
-const regularTables = computed(() =>
-  tables.value.filter((table) => !table.startsWith('evolu_')),
-)
-
-const evoluInternalTables = computed(() =>
-  tables.value.filter((table) => table.startsWith('evolu_')),
-)
+const groupedTables = computed(() => splitTables(tables.value))
+const regularTables = computed(() => groupedTables.value.regularTables)
+const evoluInternalTables = computed(() => groupedTables.value.evoluInternalTables)
 
 type TableRow = { name: string | null }
 
@@ -66,7 +63,7 @@ onMounted(() => {
       tables.value = rows
         .map((row: TableRow) => row.name)
         .filter((name: string | null): name is string => Boolean(name))
-        .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+      tables.value = sortTables(tables.value)
 
       emit('tables-loaded', tables.value)
     })

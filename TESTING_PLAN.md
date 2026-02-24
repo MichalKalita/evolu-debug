@@ -17,16 +17,14 @@ Improve testability of the debug tool while keeping real Evolu runtime behavior 
 
 ### 2) Move logic out of components into pure modules
 Create:
-- [ ] `src/lib/table-formatters.ts`
-  - [ ] `formatCell`
-  - [ ] binary detection
-  - [ ] HEX preview + byte size format
-- [ ] `src/lib/schema-formatters.ts`
-  - [ ] `formatSchemaType`
-  - [ ] union/literal/brand/optional formatting
-- [ ] `src/lib/table-categorization.ts`
-  - [ ] alphabetical sorting
-  - [ ] split `application` vs `evolu_` tables
+- [x] `src/lib/utils.ts` (consolidated helper module)
+  - [x] `formatCell`
+  - [x] binary detection
+  - [x] HEX preview + byte size format
+  - [x] `formatSchemaType`
+  - [x] union/literal/brand/optional formatting
+  - [x] alphabetical sorting
+  - [x] split `application` vs `evolu_` tables
 
 This keeps Vue SFCs thin and makes unit tests deterministic.
 
@@ -77,14 +75,14 @@ This lowers complexity and improves focused testing.
 
 ### Utility unit tests
 Add direct tests for pure helpers:
-- [ ] schema formatter behavior (union, literal, brand, optional, fallback)
-- [ ] binary formatter behavior
-- [ ] table categorization and sorting rules
+- [x] schema formatter behavior (union, literal, brand, optional, fallback)
+- [x] binary formatter behavior
+- [x] table categorization and sorting rules
 
 ## Execution Order
 1. [x] Introduce typed context keys + wiring.
-2. [ ] Extract formatter/categorization helpers.
+2. [x] Extract formatter/categorization helpers.
 3. [ ] Refactor components to use helpers and `@evolu/vue` composables.
-4. [ ] Add utility unit tests.
+4. [x] Add utility unit tests.
 5. [ ] Add browser component tests with real Evolu.
 6. [ ] Stabilize CI execution and cleanup hooks.
