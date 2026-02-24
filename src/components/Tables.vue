@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Evolu } from '@evolu/common'
-import { inject, onMounted, ref } from 'vue'
+import { computed, inject, onMounted, ref } from 'vue'
 
 const props = defineProps<{
   selectedTable: string | null
@@ -20,6 +20,14 @@ if (!evolu) {
 const isLoading = ref(true)
 const loadError = ref<string | null>(null)
 const tables = ref<string[]>([])
+
+const regularTables = computed(() =>
+  tables.value.filter((table) => !table.startsWith('evolu_')),
+)
+
+const evoluInternalTables = computed(() =>
+  tables.value.filter((table) => table.startsWith('evolu_')),
+)
 
 type TableRow = { name: string | null }
 
@@ -72,13 +80,27 @@ onMounted(() => {
 
 <template>
   <div class="tables-panel">
-    <h2>Tables</h2>
+    <h2>Application Tables</h2>
 
     <p v-if="isLoading">Loading tables...</p>
     <p v-else-if="loadError">Failed to load tables: {{ loadError }}</p>
 
     <ul v-else>
-      <li v-for="table in tables" :key="table">
+      <li v-for="table in regularTables" :key="table">
+        <button
+          type="button"
+          :class="['table-link', { 'is-active': props.selectedTable === table }]"
+          @click="emit('select-table', table)"
+        >
+          {{ table }}
+        </button>
+      </li>
+
+      <li v-if="evoluInternalTables.length > 0" class="internal-title">
+        Evolu Tables
+      </li>
+
+      <li v-for="table in evoluInternalTables" :key="table">
         <button
           type="button"
           :class="['table-link', { 'is-active': props.selectedTable === table }]"
@@ -98,7 +120,8 @@ onMounted(() => {
   font-size: 13px;
 }
 
-h2 {
+h2,
+.internal-title {
   margin: 0 0 8px;
   font-size: 12px;
   letter-spacing: 0.02em;
@@ -133,5 +156,9 @@ ul {
 .table-link.is-active {
   background: #e0e7ff;
   color: #1d4ed8;
+}
+
+.internal-title {
+  margin-top: 10px;
 }
 </style>

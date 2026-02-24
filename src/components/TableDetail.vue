@@ -150,8 +150,7 @@ watch(
 
 <template>
   <div class="detail-panel">
-    <h1>Table Detail</h1>
-    <h2>{{ props.tableName }}</h2>
+    <h1>{{ props.tableName }}</h1>
 
     <div class="view-switch">
       <button
@@ -201,7 +200,7 @@ watch(
 }
 
 h1 {
-  margin: 0;
+  margin: 0 0 10px;
   font-size: 16px;
 }
 
