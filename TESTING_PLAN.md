@@ -44,18 +44,18 @@ This lowers complexity and improves focused testing.
 ## Automated Test Strategy (No Evolu Mocking)
 
 ### Runtime
-- [ ] Use browser-capable tests (Vitest browser mode + Playwright provider) for real `@evolu/web` behavior.
-- [ ] Use unique db names per test to isolate storage.
+- [x] Use browser-capable tests (Vitest browser mode + Playwright provider) for real `@evolu/web` behavior.
+- [x] Use unique db names per test to isolate storage.
 - [ ] Seed data via real Evolu operations (`insert`/`update`), not mocks.
 
 ### Test Targets
 
 #### Tables component
-- [ ] Loads table list from real DB.
-- [ ] Alphabetical sorting.
-- [ ] `Application Tables` first, `Evolu Tables` second.
-- [ ] Emits `select-table`.
-- [ ] Emits `tables-loaded` with expected order.
+- [x] Loads table list from real DB.
+- [x] Alphabetical sorting.
+- [x] `Application Tables` first, `Evolu Tables` second.
+- [x] Emits `select-table`.
+- [x] Emits `tables-loaded` with expected order.
 - [ ] Error state rendering.
 
 #### Table detail component

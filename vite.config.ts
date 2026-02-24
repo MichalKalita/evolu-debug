@@ -15,6 +15,9 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  optimizeDeps: {
+    exclude: ['@sqlite.org/sqlite-wasm', '@evolu/sqlite-wasm', '@evolu/web'],
+  },
   build: {
     lib: {
       entry: 'src/main.ts',

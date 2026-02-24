@@ -10,6 +10,7 @@
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "test:unit": "vitest",
+    "test:browser": "vitest --config vitest.browser.config.ts",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
     "lint": "run-s lint:*",
@@ -24,10 +25,12 @@
     "vue": "^3.5.28"
   },
   "devDependencies": {
+    "@evolu/web": "^2.4.0",
     "@tsconfig/node24": "^24.0.4",
     "@types/jsdom": "^27.0.0",
     "@types/node": "^24.10.13",
     "@vitejs/plugin-vue": "^6.0.4",
+    "@vitest/browser-playwright": "^4.0.18",
     "@vitest/eslint-plugin": "^1.6.9",
     "@vue/eslint-config-typescript": "^14.6.0",
     "@vue/test-utils": "^2.4.6",
@@ -41,6 +44,7 @@
     "npm-run-all2": "^8.0.4",
     "oxfmt": "^0.32.0",
     "oxlint": "~1.47.0",
+    "playwright": "^1.58.2",
     "typescript": "~5.9.3",
     "vite": "^7.3.1",
     "vite-plugin-vue-devtools": "^8.0.6",
