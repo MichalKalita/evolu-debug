@@ -1,8 +1,10 @@
 {
   "name": "evolu-debug",
   "version": "0.0.0",
-  "private": true,
   "type": "module",
+  "exports": {
+    ".": "./src/main.ts"
+  },
   "scripts": {
     "dev": "vite",
     "build": "run-p type-check \"build-only {@}\" --",
@@ -16,6 +18,7 @@
     "format": "oxfmt src/"
   },
   "dependencies": {
+    "@evolu/common": "^7.4.1",
     "pinia": "^3.0.4",
     "vue": "^3.5.28"
   },
