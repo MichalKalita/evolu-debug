@@ -295,4 +295,42 @@ describe('TableDetail (browser, real Evolu)', () => {
     await waitFor(() => todoWrapper.text().includes('Read docs'))
     expect(todoWrapper.text()).toContain('Read docs')
   })
+
+  it('edits existing row through schema-driven edit form', async () => {
+    const evolu = createTestEvolu(String(Date.now() + 4).slice(-8))
+
+    evolu.insert('debugRow', {
+      title: 'edit-me',
+      mode: 'low',
+      blob: null,
+    })
+
+    const wrapper = mount(TableDetail, {
+      props: { tableName: 'debugRow' },
+      global: {
+        provide: {
+          [EvoluContext as symbol]: evolu,
+          [EvoluDebugSchemaContext as symbol]: schema,
+        },
+      },
+    })
+
+    cleanup = () => wrapper.unmount()
+
+    await waitFor(() => wrapper.text().includes('edit-me'))
+
+    const targetRow = wrapper
+      .findAll('tr.editable-row')
+      .find((row) => row.text().includes('edit-me'))
+    expect(targetRow).toBeDefined()
+    await targetRow!.trigger('click')
+    await wrapper.get('[data-testid="edit-title"]').setValue('edited-title')
+    await wrapper.get('[data-testid="edit-mode"]').setValue('high')
+    await wrapper.get('form.edit-grid').trigger('submit')
+
+    await waitFor(() => wrapper.text().includes('Row updated.'))
+
+    await waitFor(() => wrapper.text().includes('edited-title'))
+    expect(wrapper.text()).toContain('edited-title')
+  })
 })

@@ -69,7 +69,12 @@ void tableQueryPromise
 
     <template v-else>
       <TableInsertForm v-if="canInsertRows && currentTableSchema" :table-name="props.tableName" :schema-columns="currentTableSchema" />
-      <TableDataGrid :rows="tableRows" />
+      <TableDataGrid
+        :rows="tableRows"
+        :table-name="props.tableName"
+        :schema-columns="currentTableSchema"
+        :editable="canInsertRows"
+      />
     </template>
   </div>
 </template>
