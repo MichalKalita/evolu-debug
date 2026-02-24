@@ -50,6 +50,53 @@ const getQueryRows = (result: unknown): RowData[] => {
 const formatCell = (value: unknown): string => {
   if (value === null) return 'null'
   if (value === undefined) return ''
+  if (value instanceof Uint8Array) {
+    const preview = Array.from(value.slice(0, 10))
+      .map((byte) => byte.toString(16).toUpperCase().padStart(2, '0'))
+      .join('')
+
+    return `0x${preview} (${value.byteLength} B)`
+  }
+
+  if (value instanceof ArrayBuffer) {
+    const bytes = new Uint8Array(value)
+    const preview = Array.from(bytes.slice(0, 10))
+      .map((byte) => byte.toString(16).toUpperCase().padStart(2, '0'))
+      .join('')
+
+    return `0x${preview} (${bytes.byteLength} B)`
+  }
+
+  if (typeof value === 'object' && value !== null) {
+    const entries = Object.entries(value)
+    const isBinaryObject =
+      entries.length > 0 &&
+      entries.every(([key, entryValue]) => {
+        const index = Number(key)
+        return (
+          Number.isInteger(index) &&
+          index >= 0 &&
+          index <= 255 &&
+          typeof entryValue === 'number' &&
+          Number.isInteger(entryValue) &&
+          entryValue >= 0 &&
+          entryValue <= 255
+        )
+      })
+
+    if (isBinaryObject) {
+      const bytes = entries
+        .sort((a, b) => Number(a[0]) - Number(b[0]))
+        .map(([, entryValue]) => entryValue as number)
+      const preview = bytes
+        .slice(0, 10)
+        .map((byte) => byte.toString(16).toUpperCase().padStart(2, '0'))
+        .join('')
+
+      return `0x${preview} (${bytes.length} B)`
+    }
+  }
+
   if (typeof value === 'object') return JSON.stringify(value)
   return String(value)
 }
