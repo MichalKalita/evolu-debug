@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Evolu } from '@evolu/common'
+import type { Evolu, EvoluSchema } from '@evolu/common'
 import { computed, inject, ref, watch } from 'vue'
 
 const props = defineProps<{
@@ -7,9 +7,14 @@ const props = defineProps<{
 }>()
 
 const evolu = inject<Evolu>('evolu')
+const schema = inject<EvoluSchema>('schema')
 
 if (!evolu) {
   throw new Error('Evolu instance is not provided')
+}
+
+if (!schema) {
+  throw new Error('Schema is not provided')
 }
 
 type RowData = Record<string, unknown>
@@ -17,8 +22,120 @@ type RowData = Record<string, unknown>
 const isLoading = ref(true)
 const loadError = ref<string | null>(null)
 const rows = ref<RowData[]>([])
-const schemaSql = ref<string>('')
 const selectedView = ref<'data' | 'schema'>('data')
+
+type SchemaColumn = { name: string; definition: unknown; dataType: string }
+
+const currentTableSchema = computed(() => {
+  const schemaRecord = schema as Record<string, Record<string, unknown>>
+  return schemaRecord[props.tableName] ?? null
+})
+
+const formatLiteral = (value: unknown): string => {
+  if (typeof value === 'string') return JSON.stringify(value)
+  return String(value)
+}
+
+const formatSchemaType = (
+  definition: unknown,
+  seen: WeakSet<object> = new WeakSet(),
+): string => {
+  if (!definition || typeof definition !== 'object') {
+    if (typeof definition === 'function') return definition.name || 'Function'
+    return 'Unknown'
+  }
+
+  if (seen.has(definition)) return '[Recursive]'
+  seen.add(definition)
+
+  const typeName = 'name' in definition ? (definition as { name?: unknown }).name : null
+
+  if (typeName === 'Union' && 'members' in definition) {
+    const members = (definition as { members?: unknown }).members
+    if (Array.isArray(members)) {
+      return members.map((member) => formatSchemaType(member, seen)).join(' | ')
+    }
+  }
+
+  if (typeName === 'Literal' && 'expected' in definition) {
+    return formatLiteral((definition as { expected: unknown }).expected)
+  }
+
+  if (typeName === 'Brand') {
+    const brandName = (definition as { brand?: unknown }).brand
+    const parentType = (definition as { parentType?: unknown }).parentType
+    if (typeof brandName === 'string') {
+      return parentType
+        ? `${brandName}<${formatSchemaType(parentType, seen)}>`
+        : brandName
+    }
+  }
+
+  if (typeName === 'Optional' && 'parent' in definition) {
+    return `${formatSchemaType((definition as { parent: unknown }).parent, seen)} (optional)`
+  }
+
+  if (typeof typeName === 'string' && typeName.length > 0) return typeName
+
+  const constructorName = (definition as { constructor?: { name?: string } }).constructor?.name
+  if (constructorName && constructorName !== 'Object') return constructorName
+
+  const ownKeys = Object.getOwnPropertyNames(definition)
+  if (ownKeys.length > 0) return `Object(${ownKeys.slice(0, 6).join(', ')})`
+
+  return 'Unknown'
+}
+
+const getRuntimeValueType = (value: unknown): string => {
+  if (value === null) return 'null'
+  if (value === undefined) return 'undefined'
+  if (value instanceof Uint8Array || value instanceof ArrayBuffer) return 'bytes'
+
+  if (typeof value === 'object') {
+    const entries = Object.entries(value)
+    const isBinaryObject =
+      entries.length > 0 &&
+      entries.every(([key, entryValue]) => {
+        const index = Number(key)
+        return (
+          Number.isInteger(index) &&
+          index >= 0 &&
+          typeof entryValue === 'number' &&
+          Number.isInteger(entryValue) &&
+          entryValue >= 0 &&
+          entryValue <= 255
+        )
+      })
+
+    if (isBinaryObject) return 'bytes'
+    return 'object'
+  }
+
+  return typeof value
+}
+
+const inferColumnDataType = (columnName: string): string => {
+  const detectedTypes = new Set<string>()
+
+  for (const row of rows.value) {
+    if (!(columnName in row)) continue
+    detectedTypes.add(getRuntimeValueType(row[columnName]))
+  }
+
+  if (detectedTypes.size === 0) return 'no data'
+  if (detectedTypes.size === 1) return Array.from(detectedTypes)[0] ?? 'no data'
+  return `mixed(${Array.from(detectedTypes).join('|')})`
+}
+
+const schemaColumns = computed<SchemaColumn[]>(() => {
+  if (!currentTableSchema.value) return []
+
+  return Object.entries(currentTableSchema.value).map(([name, definition]) => ({
+    name,
+    definition,
+    dataType: inferColumnDataType(name),
+  }))
+})
 
 const columns = computed(() => {
   const keys = new Set<string>()
@@ -105,7 +222,6 @@ const loadTableDetail = () => {
   isLoading.value = true
   loadError.value = null
   rows.value = []
-  schemaSql.value = ''
 
   const query = evolu.createQuery((db) =>
     (db as unknown as { selectFrom: (table: string) => any })
@@ -113,22 +229,10 @@ const loadTableDetail = () => {
       .selectAll(),
   )
 
-  const schemaQuery = evolu.createQuery((db) =>
-    (db as unknown as { selectFrom: (table: string) => any })
-      .selectFrom('sqlite_schema')
-      .select(['sql'])
-      .where('type', '=', 'table')
-      .where('name', '=', props.tableName)
-      .limit(1),
-  )
-
-  Promise.all([evolu.loadQuery(query), evolu.loadQuery(schemaQuery)])
-    .then(([rowsResult, schemaResult]) => {
+  evolu
+    .loadQuery(query)
+    .then((rowsResult) => {
       rows.value = getQueryRows(rowsResult)
-
-      const schemaRows = getQueryRows(schemaResult)
-      const sql = schemaRows[0]?.sql
-      schemaSql.value = typeof sql === 'string' ? sql : 'Schema not found'
     })
     .catch((error: unknown) => {
       loadError.value = error instanceof Error ? error.message : String(error)
@@ -172,7 +276,28 @@ watch(
     <p v-if="isLoading">Loading rows...</p>
     <p v-else-if="loadError">Failed to load rows: {{ loadError }}</p>
 
-    <pre v-else-if="selectedView === 'schema'" class="schema-box">{{ schemaSql }}</pre>
+    <div v-else-if="selectedView === 'schema'" class="schema-wrapper">
+      <p v-if="schemaColumns.length === 0" class="schema-missing">
+        This table is not present in the provided application schema.
+      </p>
+
+      <table v-else>
+        <thead>
+          <tr>
+            <th>Column</th>
+            <th>Schema Type</th>
+            <th>Data Type</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="column in schemaColumns" :key="column.name">
+            <td>{{ column.name }}</td>
+            <td>{{ formatSchemaType(column.definition) }}</td>
+            <td>{{ column.dataType }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
     <p v-else-if="rows.length === 0">No rows found.</p>
     <div v-else class="table-wrapper">
@@ -239,6 +364,13 @@ h2 {
   border-radius: 4px;
 }
 
+.schema-wrapper {
+  overflow: auto;
+  max-height: calc(100vh - 145px);
+  border: 1px solid #d0d7de;
+  border-radius: 4px;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -261,13 +393,9 @@ th {
   background: #f6f8fa;
 }
 
-.schema-box {
+.schema-missing {
   margin: 0;
   padding: 10px;
-  background: #111827;
-  color: #f3f4f6;
-  border-radius: 4px;
-  overflow: auto;
-  font-size: 12px;
+  color: #6b7280;
 }
 </style>
