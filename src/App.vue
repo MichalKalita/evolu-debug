@@ -46,7 +46,7 @@ const handleTablesLoaded = (tableNames: string[]) => {
       </aside>
 
       <main class="debug-main">
-        <TableDetail v-if="selectedTable" :table-name="selectedTable" />
+        <TableDetail v-if="selectedTable" :key="selectedTable" :table-name="selectedTable" />
         <p v-else class="empty-state">Select a table from the left panel.</p>
       </main>
     </div>

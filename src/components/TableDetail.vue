@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { EvoluSchema } from '@evolu/common'
-import { useEvolu } from '@evolu/vue'
-import { computed, inject, ref, watch } from 'vue'
+import { useEvolu, useQuery } from '@evolu/vue'
+import { computed, inject, ref } from 'vue'
 import { EvoluDebugSchemaContext } from '../context'
 import {
   formatCell,
@@ -23,7 +23,6 @@ if (!schema) {
 
 const isLoading = ref(true)
 const loadError = ref<string | null>(null)
-const rows = ref<RowData[]>([])
 const selectedView = ref<'data' | 'schema'>('data')
 
 type SchemaColumn = { name: string; definition: unknown; dataType: string }
@@ -39,14 +38,14 @@ const schemaColumns = computed<SchemaColumn[]>(() => {
   return Object.entries(currentTableSchema.value).map(([name, definition]) => ({
     name,
     definition,
-    dataType: inferColumnDataType(rows.value, name),
+    dataType: inferColumnDataType(tableRows.value, name),
   }))
 })
 
 const columns = computed(() => {
   const keys = new Set<string>()
 
-  for (const row of rows.value) {
+  for (const row of tableRows.value) {
     for (const key of Object.keys(row)) {
       keys.add(key)
     }
@@ -55,53 +54,25 @@ const columns = computed(() => {
   return Array.from(keys)
 })
 
-const getQueryRows = (result: unknown): RowData[] => {
-  if (Array.isArray(result)) return result as RowData[]
-
-  if (
-    typeof result === 'object' &&
-    result !== null &&
-    'rows' in result &&
-    Array.isArray(result.rows)
-  ) {
-    return result.rows as RowData[]
-  }
-
-  return []
-}
-
-const loadTableDetail = () => {
-  isLoading.value = true
-  loadError.value = null
-  rows.value = []
-
-  const query = evolu.createQuery((db) =>
-    (db as unknown as { selectFrom: (table: string) => any })
-      .selectFrom(props.tableName)
-      .selectAll(),
-  )
-
-  evolu
-    .loadQuery(query)
-    .then((rowsResult) => {
-      rows.value = getQueryRows(rowsResult)
-    })
-    .catch((error: unknown) => {
-      loadError.value = error instanceof Error ? error.message : String(error)
-    })
-    .finally(() => {
-      isLoading.value = false
-    })
-}
-
-watch(
-  () => props.tableName,
-  () => {
-    selectedView.value = 'data'
-    loadTableDetail()
-  },
-  { immediate: true },
+const tableQuery = evolu.createQuery((db) =>
+  (db as unknown as { selectFrom: (table: string) => any })
+    .selectFrom(props.tableName)
+    .selectAll(),
 )
+
+const tableQueryPromise = evolu.loadQuery(tableQuery)
+
+const tableRows = useQuery(tableQuery, {
+  promise: tableQueryPromise,
+})
+
+void tableQueryPromise
+  .catch((error: unknown) => {
+    loadError.value = error instanceof Error ? error.message : String(error)
+  })
+  .finally(() => {
+    isLoading.value = false
+  })
 </script>
 
 <template>
@@ -151,7 +122,7 @@ watch(
       </table>
     </div>
 
-    <p v-else-if="rows.length === 0">No rows found.</p>
+    <p v-else-if="tableRows.length === 0">No rows found.</p>
     <div v-else class="table-wrapper">
       <table>
         <thead>
@@ -160,7 +131,7 @@ watch(
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(row, rowIndex) in rows" :key="rowIndex">
+          <tr v-for="(row, rowIndex) in tableRows" :key="rowIndex">
             <td v-for="column in columns" :key="column">
               {{ formatCell(row[column]) }}
             </td>

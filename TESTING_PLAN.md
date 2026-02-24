@@ -30,8 +30,8 @@ This keeps Vue SFCs thin and makes unit tests deterministic.
 
 ### 3) Shift data loading to composables with @evolu/vue
 - [x] In components, use `useEvolu()` and `useQuery()` for reactive query data.
-- [ ] Reduce manual `onMounted + loadQuery` where possible.
-- [ ] Keep explicit loading/error states where UX needs them.
+- [x] Reduce manual `onMounted + loadQuery` where possible.
+- [x] Keep explicit loading/error states where UX needs them.
 
 ### 4) Split large UI component
 Break `TableDetail.vue` into smaller parts:
