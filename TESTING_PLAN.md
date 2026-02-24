@@ -60,7 +60,7 @@ This lowers complexity and improves focused testing.
 
 #### Table detail component
 - [x] Loads rows for selected table.
-- [ ] Reloads after table change.
+- [x] Reloads after table change.
 - [x] Data tab renders rows/columns.
 - [x] Binary rendering: `0x<20 HEX chars> (<N> B)`.
 - [x] Schema tab renders schema from injected app schema.

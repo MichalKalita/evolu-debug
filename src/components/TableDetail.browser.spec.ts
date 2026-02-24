@@ -11,6 +11,7 @@ import {
 import { EvoluContext } from '@evolu/vue'
 import { evoluWebDeps } from '@evolu/web'
 import { mount } from '@vue/test-utils'
+import { defineComponent, h, ref } from 'vue'
 import { afterEach, describe, expect, it } from 'vitest'
 import { EvoluDebugSchemaContext } from '../context'
 import TableDetail from './TableDetail.vue'
@@ -19,6 +20,12 @@ const DebugRowId = id('DebugRow')
 
 const schema = {
   debugRow: {
+    id: DebugRowId,
+    title: NonEmptyString,
+    mode: union('low', 'high'),
+    blob: nullOr(Uint8ArrayType),
+  },
+  debugRowAlt: {
     id: DebugRowId,
     title: NonEmptyString,
     mode: union('low', 'high'),
@@ -112,5 +119,63 @@ describe('TableDetail (browser, real Evolu)', () => {
     expect(text).toContain('bytes')
     expect(text).toContain('null')
     expect(text).toContain('String')
+  })
+
+  it('reloads data when table changes', async () => {
+    const evolu = createTestEvolu(String(Date.now() + 1).slice(-8))
+
+    evolu.insert('debugRow', {
+      title: 'from-first-table',
+      mode: 'low',
+      blob: null,
+    })
+    evolu.insert('debugRowAlt', {
+      title: 'from-second-table',
+      mode: 'high',
+      blob: null,
+    })
+
+    const Harness = defineComponent({
+      setup() {
+        const selectedTable = ref<'debugRow' | 'debugRowAlt'>('debugRow')
+        const switchTable = () => {
+          selectedTable.value = 'debugRowAlt'
+        }
+        return () =>
+          h('div', [
+            h(
+              'button',
+              {
+                class: 'switch-table',
+                onClick: switchTable,
+              },
+              'Switch',
+            ),
+            h(TableDetail, {
+              key: selectedTable.value,
+              tableName: selectedTable.value,
+            }),
+          ])
+      },
+    })
+
+    const wrapper = mount(Harness, {
+      global: {
+        provide: {
+          [EvoluContext as symbol]: evolu,
+          [EvoluDebugSchemaContext as symbol]: schema,
+        },
+      },
+    })
+
+    cleanup = () => wrapper.unmount()
+
+    await waitFor(() => wrapper.text().includes('from-first-table'))
+    expect(wrapper.text()).toContain('from-first-table')
+
+    await wrapper.get('button.switch-table').trigger('click')
+
+    await waitFor(() => wrapper.text().includes('from-second-table'))
+    expect(wrapper.text()).toContain('from-second-table')
   })
 })
