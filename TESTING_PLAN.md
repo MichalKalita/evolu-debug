@@ -12,7 +12,7 @@ Improve testability of the debug tool while keeping real Evolu runtime behavior 
 
 ### 1) Use typed context keys instead of string inject keys
 - [x] Replace string keys (`'evolu'`, `'schema'`) with `InjectionKey`.
-- [ ] Keep Evolu provided via `@evolu/vue` conventions (`provideEvolu`, `useEvolu`).
+- [x] Keep Evolu provided via `@evolu/vue` conventions (`provideEvolu`, `useEvolu`).
 - [x] Add dedicated schema key (e.g. `SchemaContext`) for schema injection.
 
 ### 2) Move logic out of components into pure modules
@@ -69,9 +69,9 @@ This lowers complexity and improves focused testing.
 
 #### App shell
 - [x] Toggle open/close.
-- [ ] Initial table selection after `tables-loaded`.
-- [ ] Internal state navigation between tables (no URL).
-- [ ] Reset state on close.
+- [x] Initial table selection after `tables-loaded`.
+- [x] Internal state navigation between tables (no URL).
+- [x] Reset state on close.
 
 ### Utility unit tests
 Add direct tests for pure helpers:
@@ -82,7 +82,7 @@ Add direct tests for pure helpers:
 ## Execution Order
 1. [x] Introduce typed context keys + wiring.
 2. [x] Extract formatter/categorization helpers.
-3. [ ] Refactor components to use helpers and `@evolu/vue` composables.
+3. [x] Refactor components to use helpers and `@evolu/vue` composables.
 4. [x] Add utility unit tests.
 5. [ ] Add browser component tests with real Evolu.
 6. [ ] Stabilize CI execution and cleanup hooks.
