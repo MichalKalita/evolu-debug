@@ -200,7 +200,12 @@ describe('TableDetail (browser, real Evolu)', () => {
 
     cleanup = () => wrapper.unmount()
 
-    await waitFor(() => wrapper.text().includes('Add Row'))
+    await wrapper
+      .findAll('button.switch-btn')
+      .find((button) => button.text().trim() === 'Add Row')
+      ?.trigger('click')
+
+    await waitFor(() => wrapper.find('form.insert-grid').exists())
 
     await wrapper.get('[data-testid="insert-title"]').setValue('inserted-row')
     await wrapper.get('[data-testid="insert-mode"]').setValue('high')
@@ -208,6 +213,12 @@ describe('TableDetail (browser, real Evolu)', () => {
     await wrapper.get('form.insert-grid').trigger('submit')
 
     await waitFor(() => wrapper.text().includes('Row inserted.'))
+
+    await wrapper
+      .findAll('button.switch-btn')
+      .find((button) => button.text().trim() === 'Data')
+      ?.trigger('click')
+
     await waitFor(() => wrapper.text().includes('inserted-row'))
 
     expect(wrapper.text()).toContain('inserted-row')
@@ -245,10 +256,14 @@ describe('TableDetail (browser, real Evolu)', () => {
 
     cleanup = () => categoryWrapper.unmount()
 
-    await waitFor(() => categoryWrapper.text().includes('Add Row'))
+    await categoryWrapper
+      .findAll('button.switch-btn')
+      .find((button) => button.text().trim() === 'Add Row')
+      ?.trigger('click')
+    await waitFor(() => categoryWrapper.find('form.insert-grid').exists())
     await categoryWrapper.get('[data-testid="insert-name"]').setValue('Work')
     await categoryWrapper.get('form.insert-grid').trigger('submit')
-    await waitFor(() => categoryWrapper.text().includes('Work'))
+    await waitFor(() => categoryWrapper.text().includes('Row inserted.'))
 
     categoryWrapper.unmount()
 
@@ -264,7 +279,11 @@ describe('TableDetail (browser, real Evolu)', () => {
 
     cleanup = () => todoWrapper.unmount()
 
-    await waitFor(() => todoWrapper.text().includes('Add Row'))
+    await todoWrapper
+      .findAll('button.switch-btn')
+      .find((button) => button.text().trim() === 'Add Row')
+      ?.trigger('click')
+    await waitFor(() => todoWrapper.find('form.insert-grid').exists())
 
     const categorySelect = todoWrapper.get('[data-testid="insert-categoryId"]')
     await waitFor(() => categorySelect.findAll('option').length >= 2)
@@ -278,6 +297,12 @@ describe('TableDetail (browser, real Evolu)', () => {
     await categorySelect.setValue('')
     await todoWrapper.get('form.insert-grid').trigger('submit')
 
+    await waitFor(() => todoWrapper.text().includes('Row inserted.'))
+    await todoWrapper
+      .findAll('button.switch-btn')
+      .find((button) => button.text().trim() === 'Data')
+      ?.trigger('click')
+
     await waitFor(() => todoWrapper.text().includes('Buy milk'))
     expect(todoWrapper.text()).toContain('Buy milk')
 
@@ -287,10 +312,23 @@ describe('TableDetail (browser, real Evolu)', () => {
       ?.element.getAttribute('value')
     expect(categoryValue).toBeTruthy()
 
+    await todoWrapper
+      .findAll('button.switch-btn')
+      .find((button) => button.text().trim() === 'Add Row')
+      ?.trigger('click')
+    await waitFor(() => todoWrapper.find('form.insert-grid').exists())
+    const categorySelectSecond = todoWrapper.get('[data-testid="insert-categoryId"]')
+
     await todoWrapper.get('[data-testid="insert-title"]').setValue('Read docs')
     await todoWrapper.get('[data-testid="insert-priority"]').setValue('low')
-    await categorySelect.setValue(categoryValue as string)
+    await categorySelectSecond.setValue(categoryValue as string)
     await todoWrapper.get('form.insert-grid').trigger('submit')
+
+    await waitFor(() => todoWrapper.text().includes('Row inserted.'))
+    await todoWrapper
+      .findAll('button.switch-btn')
+      .find((button) => button.text().trim() === 'Data')
+      ?.trigger('click')
 
     await waitFor(() => todoWrapper.text().includes('Read docs'))
     expect(todoWrapper.text()).toContain('Read docs')
@@ -327,8 +365,6 @@ describe('TableDetail (browser, real Evolu)', () => {
     await wrapper.get('[data-testid="edit-title"]').setValue('edited-title')
     await wrapper.get('[data-testid="edit-mode"]').setValue('high')
     await wrapper.get('form.edit-grid').trigger('submit')
-
-    await waitFor(() => wrapper.text().includes('Row updated.'))
 
     await waitFor(() => wrapper.text().includes('edited-title'))
     expect(wrapper.text()).toContain('edited-title')

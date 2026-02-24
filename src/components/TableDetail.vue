@@ -5,6 +5,7 @@ import { computed, inject, ref } from 'vue'
 import { EvoluDebugSchemaContext } from '../context'
 import type { RowData } from '../lib/utils'
 import TableDataGrid from './TableDataGrid.vue'
+import TableEditForm from './TableEditForm.vue'
 import TableDetailHeader from './TableDetailHeader.vue'
 import TableInsertForm from './TableInsertForm.vue'
 import TableSchemaGrid from './TableSchemaGrid.vue'
@@ -22,7 +23,7 @@ if (!schema) {
 
 const isLoading = ref(true)
 const loadError = ref<string | null>(null)
-const selectedView = ref<'data' | 'schema'>('data')
+const selectedView = ref<'data' | 'schema' | 'insert'>('data')
 
 const currentTableSchema = computed(() => {
   const schemaRecord = schema as Record<string, Record<string, unknown>>
@@ -32,6 +33,7 @@ const currentTableSchema = computed(() => {
 const canInsertRows = computed(
   () => currentTableSchema.value !== null && !props.tableName.startsWith('evolu_'),
 )
+const editingRow = ref<RowData | null>(null)
 
 const tableQuery = evolu.createQuery((db) =>
   (db as unknown as { selectFrom: (table: string) => any })
@@ -59,6 +61,7 @@ void tableQueryPromise
     <TableDetailHeader
       :table-name="props.tableName"
       :selected-view="selectedView"
+      :show-insert-tab="canInsertRows"
       @update:selected-view="selectedView = $event"
     />
 
@@ -67,13 +70,22 @@ void tableQueryPromise
 
     <TableSchemaGrid v-else-if="selectedView === 'schema'" :columns="currentTableSchema" :rows="tableRows" />
 
+    <TableInsertForm
+      v-else-if="selectedView === 'insert' && canInsertRows && currentTableSchema"
+      :table-name="props.tableName"
+      :schema-columns="currentTableSchema"
+    />
+
+    <p v-else-if="selectedView === 'insert'">Insert is available only for application tables.</p>
+
     <template v-else>
-      <TableInsertForm v-if="canInsertRows && currentTableSchema" :table-name="props.tableName" :schema-columns="currentTableSchema" />
-      <TableDataGrid
-        :rows="tableRows"
+      <TableDataGrid :rows="tableRows" :editable="canInsertRows" @edit-row="editingRow = $event" />
+      <TableEditForm
+        v-if="canInsertRows && currentTableSchema"
         :table-name="props.tableName"
         :schema-columns="currentTableSchema"
-        :editable="canInsertRows"
+        :row="editingRow"
+        @close="editingRow = null"
       />
     </template>
   </div>

@@ -1,11 +1,12 @@
 <script setup lang="ts">
 const props = defineProps<{
   tableName: string
-  selectedView: 'data' | 'schema'
+  selectedView: 'data' | 'schema' | 'insert'
+  showInsertTab?: boolean
 }>()
 
 const emit = defineEmits<{
-  (event: 'update:selectedView', value: 'data' | 'schema'): void
+  (event: 'update:selectedView', value: 'data' | 'schema' | 'insert'): void
 }>()
 </script>
 
@@ -26,6 +27,14 @@ const emit = defineEmits<{
       @click="emit('update:selectedView', 'schema')"
     >
       Schema
+    </button>
+    <button
+      v-if="props.showInsertTab"
+      type="button"
+      :class="['switch-btn', { 'is-active': props.selectedView === 'insert' }]"
+      @click="emit('update:selectedView', 'insert')"
+    >
+      Add Row
     </button>
   </div>
 </template>
