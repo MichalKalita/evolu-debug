@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Evolu } from '@evolu/common'
 import { computed, inject, onMounted, ref } from 'vue'
+import { EvoluDebugEvoluContext } from '../context'
 
 const props = defineProps<{
   selectedTable: string | null
@@ -11,7 +12,7 @@ const emit = defineEmits<{
   (event: 'tables-loaded', tableNames: string[]): void
 }>()
 
-const evolu = inject<Evolu>('evolu')
+const evolu = inject<Evolu>(EvoluDebugEvoluContext)
 
 if (!evolu) {
   throw new Error('Evolu instance is not provided')

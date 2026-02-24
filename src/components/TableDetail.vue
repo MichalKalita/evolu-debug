@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import type { Evolu, EvoluSchema } from '@evolu/common'
 import { computed, inject, ref, watch } from 'vue'
+import { EvoluDebugEvoluContext, EvoluDebugSchemaContext } from '../context'
 
 const props = defineProps<{
   tableName: string
 }>()
 
-const evolu = inject<Evolu>('evolu')
-const schema = inject<EvoluSchema>('schema')
+const evolu = inject<Evolu>(EvoluDebugEvoluContext)
+const schema = inject<EvoluSchema>(EvoluDebugSchemaContext)
 
 if (!evolu) {
   throw new Error('Evolu instance is not provided')
