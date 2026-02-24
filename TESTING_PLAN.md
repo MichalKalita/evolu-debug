@@ -46,7 +46,7 @@ This lowers complexity and improves focused testing.
 ### Runtime
 - [x] Use browser-capable tests (Vitest browser mode + Playwright provider) for real `@evolu/web` behavior.
 - [x] Use unique db names per test to isolate storage.
-- [ ] Seed data via real Evolu operations (`insert`/`update`), not mocks.
+- [x] Seed data via real Evolu operations (`insert`/`update`), not mocks.
 
 ### Test Targets
 
@@ -59,13 +59,13 @@ This lowers complexity and improves focused testing.
 - [ ] Error state rendering.
 
 #### Table detail component
-- [ ] Loads rows for selected table.
+- [x] Loads rows for selected table.
 - [ ] Reloads after table change.
-- [ ] Data tab renders rows/columns.
-- [ ] Binary rendering: `0x<20 HEX chars> (<N> B)`.
-- [ ] Schema tab renders schema from injected app schema.
-- [ ] Union formatting (e.g. `"low" | "high"`).
-- [ ] Data Type inference (`string`, `bytes`, `mixed(...)`, `no data`).
+- [x] Data tab renders rows/columns.
+- [x] Binary rendering: `0x<20 HEX chars> (<N> B)`.
+- [x] Schema tab renders schema from injected app schema.
+- [x] Union formatting (e.g. `"low" | "high"`).
+- [x] Data Type inference (`string`, `bytes`, `mixed(...)`, `no data`).
 
 #### App shell
 - [x] Toggle open/close.
