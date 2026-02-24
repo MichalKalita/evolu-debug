@@ -35,9 +35,9 @@ This keeps Vue SFCs thin and makes unit tests deterministic.
 
 ### 4) Split large UI component
 Break `TableDetail.vue` into smaller parts:
-- [ ] `TableDetailHeader` (title + view switch)
-- [ ] `TableDataGrid`
-- [ ] `TableSchemaGrid`
+- [x] `TableDetailHeader` (title + view switch)
+- [x] `TableDataGrid`
+- [x] `TableSchemaGrid`
 
 This lowers complexity and improves focused testing.
 

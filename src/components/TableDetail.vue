@@ -3,12 +3,10 @@ import type { EvoluSchema } from '@evolu/common'
 import { useEvolu, useQuery } from '@evolu/vue'
 import { computed, inject, ref } from 'vue'
 import { EvoluDebugSchemaContext } from '../context'
-import {
-  formatCell,
-  formatSchemaType,
-  inferColumnDataType,
-  type RowData,
-} from '../lib/utils'
+import type { RowData } from '../lib/utils'
+import TableDataGrid from './TableDataGrid.vue'
+import TableDetailHeader from './TableDetailHeader.vue'
+import TableSchemaGrid from './TableSchemaGrid.vue'
 
 const props = defineProps<{
   tableName: string
@@ -25,33 +23,9 @@ const isLoading = ref(true)
 const loadError = ref<string | null>(null)
 const selectedView = ref<'data' | 'schema'>('data')
 
-type SchemaColumn = { name: string; definition: unknown; dataType: string }
-
 const currentTableSchema = computed(() => {
   const schemaRecord = schema as Record<string, Record<string, unknown>>
   return schemaRecord[props.tableName] ?? null
-})
-
-const schemaColumns = computed<SchemaColumn[]>(() => {
-  if (!currentTableSchema.value) return []
-
-  return Object.entries(currentTableSchema.value).map(([name, definition]) => ({
-    name,
-    definition,
-    dataType: inferColumnDataType(tableRows.value, name),
-  }))
-})
-
-const columns = computed(() => {
-  const keys = new Set<string>()
-
-  for (const row of tableRows.value) {
-    for (const key of Object.keys(row)) {
-      keys.add(key)
-    }
-  }
-
-  return Array.from(keys)
 })
 
 const tableQuery = evolu.createQuery((db) =>
@@ -77,148 +51,27 @@ void tableQueryPromise
 
 <template>
   <div class="detail-panel">
-    <h1>{{ props.tableName }}</h1>
-
-    <div class="view-switch">
-      <button
-        type="button"
-        :class="['switch-btn', { 'is-active': selectedView === 'data' }]"
-        @click="selectedView = 'data'"
-      >
-        Data
-      </button>
-      <button
-        type="button"
-        :class="['switch-btn', { 'is-active': selectedView === 'schema' }]"
-        @click="selectedView = 'schema'"
-      >
-        Schema
-      </button>
-    </div>
+    <TableDetailHeader
+      :table-name="props.tableName"
+      :selected-view="selectedView"
+      @update:selected-view="selectedView = $event"
+    />
 
     <p v-if="isLoading">Loading rows...</p>
     <p v-else-if="loadError">Failed to load rows: {{ loadError }}</p>
 
-    <div v-else-if="selectedView === 'schema'" class="schema-wrapper">
-      <p v-if="schemaColumns.length === 0" class="schema-missing">
-        This table is not present in the provided application schema.
-      </p>
+    <TableSchemaGrid
+      v-else-if="selectedView === 'schema'"
+      :columns="currentTableSchema"
+      :rows="tableRows"
+    />
 
-      <table v-else>
-        <thead>
-          <tr>
-            <th>Column</th>
-            <th>Schema Type</th>
-            <th>Data Type</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="column in schemaColumns" :key="column.name">
-            <td>{{ column.name }}</td>
-            <td>{{ formatSchemaType(column.definition) }}</td>
-            <td>{{ column.dataType }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <p v-else-if="tableRows.length === 0">No rows found.</p>
-    <div v-else class="table-wrapper">
-      <table>
-        <thead>
-          <tr>
-            <th v-for="column in columns" :key="column">{{ column }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(row, rowIndex) in tableRows" :key="rowIndex">
-            <td v-for="column in columns" :key="column">
-              {{ formatCell(row[column]) }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <TableDataGrid v-else :rows="tableRows" />
   </div>
 </template>
 
 <style scoped>
 .detail-panel {
   color: #111827;
-}
-
-h1 {
-  margin: 0 0 10px;
-  font-size: 16px;
-}
-
-h2 {
-  margin: 4px 0 10px;
-  font-size: 13px;
-  color: #6b7280;
-}
-
-.view-switch {
-  display: inline-flex;
-  gap: 6px;
-  margin-bottom: 10px;
-}
-
-.switch-btn {
-  border: 1px solid #d1d5db;
-  background: #ffffff;
-  color: #374151;
-  border-radius: 4px;
-  padding: 5px 9px;
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.switch-btn.is-active {
-  background: #e0e7ff;
-  color: #1d4ed8;
-  border-color: #93c5fd;
-}
-
-.table-wrapper {
-  overflow: auto;
-  max-height: calc(100vh - 145px);
-  border: 1px solid #d0d7de;
-  border-radius: 4px;
-}
-
-.schema-wrapper {
-  overflow: auto;
-  max-height: calc(100vh - 145px);
-  border: 1px solid #d0d7de;
-  border-radius: 4px;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 560px;
-  font-size: 12px;
-}
-
-th,
-td {
-  border-bottom: 1px solid #d0d7de;
-  padding: 5px 7px;
-  text-align: left;
-  vertical-align: top;
-  white-space: nowrap;
-}
-
-th {
-  position: sticky;
-  top: 0;
-  background: #f6f8fa;
-}
-
-.schema-missing {
-  margin: 0;
-  padding: 10px;
-  color: #6b7280;
 }
 </style>
