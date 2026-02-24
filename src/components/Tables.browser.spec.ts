@@ -88,4 +88,27 @@ describe('Tables (browser, real Evolu)', () => {
     const selectionEvents = wrapper.emitted('select-table') ?? []
     expect(selectionEvents.some((eventArgs) => eventArgs?.[0] === 'todo')).toBe(true)
   })
+
+  it('renders error state when query fails', async () => {
+    const evolu = createTestEvolu(String(Date.now() + 1).slice(-8))
+    const wrapper = mount(Tables, {
+      props: {
+        selectedTable: null,
+        tableSource: '',
+      },
+      global: {
+        provide: {
+          [EvoluContext as symbol]: evolu,
+          [EvoluDebugSchemaContext as symbol]: schema,
+        },
+      },
+    })
+
+    cleanup = () => wrapper.unmount()
+
+    await waitFor(() => wrapper.text().includes('Failed to load tables:'))
+
+    expect(wrapper.text()).toContain('Failed to load tables:')
+    expect(wrapper.findAll('button.table-link').length).toBe(0)
+  })
 })

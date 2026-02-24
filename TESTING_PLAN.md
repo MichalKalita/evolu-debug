@@ -56,7 +56,7 @@ This lowers complexity and improves focused testing.
 - [x] `Application Tables` first, `Evolu Tables` second.
 - [x] Emits `select-table`.
 - [x] Emits `tables-loaded` with expected order.
-- [ ] Error state rendering.
+- [x] Error state rendering.
 
 #### Table detail component
 - [x] Loads rows for selected table.
@@ -84,5 +84,5 @@ Add direct tests for pure helpers:
 2. [x] Extract formatter/categorization helpers.
 3. [x] Refactor components to use helpers and `@evolu/vue` composables.
 4. [x] Add utility unit tests.
-5. [ ] Add browser component tests with real Evolu.
-6. [ ] Stabilize CI execution and cleanup hooks.
+5. [x] Add browser component tests with real Evolu.
+6. [x] Stabilize CI execution and cleanup hooks.

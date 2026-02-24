@@ -1,11 +1,19 @@
 <script setup lang="ts">
 import { useEvolu, useQuery } from '@evolu/vue'
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { sortTables, splitTables } from '../lib/utils'
 
-const props = defineProps<{
-  selectedTable: string | null
-}>()
+const props = withDefaults(
+  defineProps<{
+    selectedTable: string | null
+    tableSource?: string
+    tableNameColumn?: string
+  }>(),
+  {
+    tableSource: 'sqlite_schema',
+    tableNameColumn: 'name',
+  },
+)
 
 const emit = defineEmits<{
   (event: 'select-table', tableName: string): void
@@ -13,20 +21,49 @@ const emit = defineEmits<{
 }>()
 
 const evolu = useEvolu()
+const isLoading = ref(true)
+const loadError = ref<string | null>(null)
 
 type TableRow = { name: string | null }
 
-const tablesQuery = evolu.createQuery((db) =>
-  db
-    .selectFrom('sqlite_schema')
-    .select(['name'])
-    .where('type', '=', 'table')
-    .where('name', 'is not', null)
-    .where('name', 'not like', 'sqlite_%')
-    .orderBy('name'),
-)
+const tableRows = ref<ReadonlyArray<TableRow>>([])
 
-const tableRows = useQuery(tablesQuery)
+const hasInvalidQueryConfig =
+  props.tableSource.trim().length === 0 || props.tableNameColumn.trim().length === 0
+
+if (hasInvalidQueryConfig) {
+  loadError.value = 'Invalid table query configuration'
+  isLoading.value = false
+} else {
+  const tablesQuery = evolu.createQuery((db) =>
+    db
+      .selectFrom(props.tableSource)
+      .select([props.tableNameColumn as 'name'])
+      .where('type', '=', 'table')
+      .where(props.tableNameColumn as 'name', 'is not', null)
+      .where(props.tableNameColumn as 'name', 'not like', 'sqlite_%')
+      .orderBy(props.tableNameColumn as 'name'),
+  )
+
+  const tableRowsPromise = evolu.loadQuery(tablesQuery)
+  const queryRows = useQuery(tablesQuery, { promise: tableRowsPromise })
+
+  watch(
+    queryRows,
+    (rows) => {
+      tableRows.value = rows as ReadonlyArray<TableRow>
+    },
+    { immediate: true },
+  )
+
+  void tableRowsPromise
+    .catch((error: unknown) => {
+      loadError.value = error instanceof Error ? error.message : String(error)
+    })
+    .finally(() => {
+      isLoading.value = false
+    })
+}
 
 const tables = computed(() =>
   sortTables(
@@ -53,7 +90,10 @@ watch(
   <div class="tables-panel">
     <h2>Application Tables</h2>
 
-    <ul>
+    <p v-if="isLoading">Loading tables...</p>
+    <p v-else-if="loadError">Failed to load tables: {{ loadError }}</p>
+
+    <ul v-else>
       <li v-for="table in regularTables" :key="table">
         <button
           type="button"

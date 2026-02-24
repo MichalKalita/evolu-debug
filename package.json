@@ -11,6 +11,7 @@
     "preview": "vite preview",
     "test:unit": "vitest",
     "test:browser": "vitest --config vitest.browser.config.ts",
+    "test:ci": "npm run type-check && npm run test:unit -- --run && npm run test:browser -- --run",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
     "lint": "run-s lint:*",
