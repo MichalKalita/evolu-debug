@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import type { Evolu, EvoluSchema } from '@evolu/common'
+import type { EvoluSchema } from '@evolu/common'
+import { useEvolu } from '@evolu/vue'
 import { computed, inject, ref, watch } from 'vue'
-import { EvoluDebugEvoluContext, EvoluDebugSchemaContext } from '../context'
+import { EvoluDebugSchemaContext } from '../context'
 import {
   formatCell,
   formatSchemaType,
@@ -13,12 +14,8 @@ const props = defineProps<{
   tableName: string
 }>()
 
-const evolu = inject<Evolu>(EvoluDebugEvoluContext)
+const evolu = useEvolu()
 const schema = inject<EvoluSchema>(EvoluDebugSchemaContext)
-
-if (!evolu) {
-  throw new Error('Evolu instance is not provided')
-}
 
 if (!schema) {
   throw new Error('Schema is not provided')

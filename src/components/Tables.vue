@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import type { Evolu } from '@evolu/common'
-import { computed, inject, onMounted, ref } from 'vue'
-import { EvoluDebugEvoluContext } from '../context'
+import { useEvolu, useQuery } from '@evolu/vue'
+import { computed, watch } from 'vue'
 import { sortTables, splitTables } from '../lib/utils'
 
 const props = defineProps<{
@@ -13,36 +12,9 @@ const emit = defineEmits<{
   (event: 'tables-loaded', tableNames: string[]): void
 }>()
 
-const evolu = inject<Evolu>(EvoluDebugEvoluContext)
-
-if (!evolu) {
-  throw new Error('Evolu instance is not provided')
-}
-
-const isLoading = ref(true)
-const loadError = ref<string | null>(null)
-const tables = ref<string[]>([])
-
-const groupedTables = computed(() => splitTables(tables.value))
-const regularTables = computed(() => groupedTables.value.regularTables)
-const evoluInternalTables = computed(() => groupedTables.value.evoluInternalTables)
+const evolu = useEvolu()
 
 type TableRow = { name: string | null }
-
-const getTableRows = (result: unknown): TableRow[] => {
-  if (Array.isArray(result)) return result as TableRow[]
-
-  if (
-    typeof result === 'object' &&
-    result !== null &&
-    'rows' in result &&
-    Array.isArray(result.rows)
-  ) {
-    return result.rows as TableRow[]
-  }
-
-  return []
-}
 
 const tablesQuery = evolu.createQuery((db) =>
   db
@@ -54,36 +26,34 @@ const tablesQuery = evolu.createQuery((db) =>
     .orderBy('name'),
 )
 
-onMounted(() => {
-  evolu
-    .loadQuery(tablesQuery)
-    .then((result) => {
-      const rows = getTableRows(result)
+const tableRows = useQuery(tablesQuery)
 
-      tables.value = rows
-        .map((row: TableRow) => row.name)
-        .filter((name: string | null): name is string => Boolean(name))
-      tables.value = sortTables(tables.value)
+const tables = computed(() =>
+  sortTables(
+    (tableRows.value as ReadonlyArray<TableRow>)
+      .map((row) => row.name)
+      .filter((name): name is string => Boolean(name)),
+  ),
+)
 
-      emit('tables-loaded', tables.value)
-    })
-    .catch((error: unknown) => {
-      loadError.value = error instanceof Error ? error.message : String(error)
-    })
-    .finally(() => {
-      isLoading.value = false
-    })
-})
+const groupedTables = computed(() => splitTables(tables.value))
+const regularTables = computed(() => groupedTables.value.regularTables)
+const evoluInternalTables = computed(() => groupedTables.value.evoluInternalTables)
+
+watch(
+  tables,
+  (tableNames) => {
+    emit('tables-loaded', [...tableNames])
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
   <div class="tables-panel">
     <h2>Application Tables</h2>
 
-    <p v-if="isLoading">Loading tables...</p>
-    <p v-else-if="loadError">Failed to load tables: {{ loadError }}</p>
-
-    <ul v-else>
+    <ul>
       <li v-for="table in regularTables" :key="table">
         <button
           type="button"
