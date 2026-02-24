@@ -2,8 +2,13 @@
 import type { Evolu } from '@evolu/common'
 import { inject, onMounted, ref } from 'vue'
 
+const props = defineProps<{
+  selectedTable: string | null
+}>()
+
 const emit = defineEmits<{
   (event: 'select-table', tableName: string): void
+  (event: 'tables-loaded', tableNames: string[]): void
 }>()
 
 const evolu = inject<Evolu>('evolu')
@@ -52,6 +57,9 @@ onMounted(() => {
       tables.value = rows
         .map((row: TableRow) => row.name)
         .filter((name: string | null): name is string => Boolean(name))
+        .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+
+      emit('tables-loaded', tables.value)
     })
     .catch((error: unknown) => {
       loadError.value = error instanceof Error ? error.message : String(error)
@@ -63,8 +71,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div id="evolu-debug-root">
-    <h1>Evolu Debug</h1>
+  <div class="tables-panel">
+    <h2>Tables</h2>
 
     <p v-if="isLoading">Loading tables...</p>
     <p v-else-if="loadError">Failed to load tables: {{ loadError }}</p>
@@ -73,7 +81,7 @@ onMounted(() => {
       <li v-for="table in tables" :key="table">
         <button
           type="button"
-          class="table-link"
+          :class="['table-link', { 'is-active': props.selectedTable === table }]"
           @click="emit('select-table', table)"
         >
           {{ table }}
@@ -84,24 +92,46 @@ onMounted(() => {
 </template>
 
 <style scoped>
-#evolu-debug-root {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100vh;
-  background-color: #fff;
-  z-index: 1000000;
-  color: black;
+.tables-panel {
+  padding: 10px;
+  color: #111827;
+  font-size: 13px;
+}
+
+h2 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .table-link {
   border: none;
   background: none;
-  padding: 0;
-  color: #0366d6;
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 6px 8px;
+  color: #1f2937;
   cursor: pointer;
-  text-decoration: underline;
+  text-decoration: none;
   font: inherit;
+  border-radius: 4px;
+}
+
+.table-link:hover {
+  background: #eef2ff;
+}
+
+.table-link.is-active {
+  background: #e0e7ff;
+  color: #1d4ed8;
 }
 </style>
