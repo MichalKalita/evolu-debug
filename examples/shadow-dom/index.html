@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Evolu Debug Shadow Example</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 24px;
+        font-family: "Comic Sans MS", cursive;
+        color: #ff1493;
+        background: repeating-linear-gradient(
+          45deg,
+          #fff8dc,
+          #fff8dc 16px,
+          #f0fff0 16px,
+          #f0fff0 32px
+        );
+      }
+
+      h1,
+      p,
+      button,
+      table,
+      input,
+      select,
+      th,
+      td {
+        font-size: 24px !important;
+        border-radius: 24px !important;
+        border: 4px dashed #ff1493 !important;
+        color: #ff1493 !important;
+        background: #fffacd !important;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Shadow DOM Styling Stress Test</h1>
+    <p>
+      This page uses intentionally aggressive global CSS. Evolu debug UI should still render with its own
+      styles inside Shadow DOM.
+    </p>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

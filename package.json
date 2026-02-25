@@ -3,10 +3,15 @@
   "version": "0.0.0",
   "type": "module",
   "exports": {
-    ".": "./src/main.ts"
+    ".": {
+      "types": "./src/main.ts",
+      "import": "./dist/evolu-debug.js",
+      "default": "./dist/evolu-debug.js"
+    }
   },
   "scripts": {
     "dev": "vite",
+    "dev:example": "vite --open /examples/shadow-dom/index.html",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "test:unit": "vitest",
