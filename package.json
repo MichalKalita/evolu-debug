@@ -1,7 +1,32 @@
 {
   "name": "evolu-debug",
   "version": "0.0.0",
+  "description": "Debug tool for inspecting Evolu tables",
+  "license": "MIT",
+  "author": "Michal Kalita <kalita.michal@gmail.com>",
   "type": "module",
+  "homepage": "https://github.com/MichalKalita/evolu-debug#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MichalKalita/evolu-debug.git"
+  },
+  "bugs": {
+    "url": "https://github.com/MichalKalita/evolu-debug/issues"
+  },
+  "keywords": [
+    "evolu",
+    "sqlite",
+    "debug",
+    "inspector",
+    "shadow-dom",
+    "vue"
+  ],
+  "files": [
+    "dist",
+    "src/main.ts",
+    "README.md",
+    "LICENSE"
+  ],
   "exports": {
     ".": {
       "types": "./src/main.ts",
@@ -13,6 +38,7 @@
     "dev": "vite",
     "dev:example": "vite --open /examples/shadow-dom/index.html",
     "build": "run-p type-check \"build-only {@}\" --",
+    "prepublishOnly": "npm run build && npm run test:unit -- --run src/__tests__/main.spec.ts",
     "preview": "vite preview",
     "test:unit": "vitest",
     "test:browser": "vitest --config vitest.browser.config.ts",
@@ -60,5 +86,8 @@
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
