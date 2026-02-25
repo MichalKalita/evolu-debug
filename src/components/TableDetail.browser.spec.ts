@@ -96,6 +96,53 @@ describe('TableDetail (browser, real Evolu)', () => {
     expect(wrapper.find('[data-testid="data-toolbar-count"]').text()).toContain('Rows:')
   })
 
+  it('filters visible rows via global search in toolbar', async () => {
+    const evolu = createTestEvolu(String(Date.now() + 6).slice(-8))
+
+    evolu.insert('debugRow', {
+      title: 'search-alpha',
+      mode: 'low',
+      blob: null,
+    })
+    evolu.insert('debugRow', {
+      title: 'search-beta',
+      mode: 'high',
+      blob: null,
+    })
+
+    const wrapper = mount(TableDetail, {
+      props: { tableName: 'debugRow' },
+      global: {
+        provide: {
+          [EvoluContext as symbol]: evolu,
+          [EvoluDebugSchemaContext as symbol]: schema,
+        },
+      },
+    })
+
+    cleanup = () => wrapper.unmount()
+
+    await waitFor(() => wrapper.text().includes('search-alpha') && wrapper.text().includes('search-beta'))
+
+    await wrapper.get('[data-testid="data-toolbar-search"]').setValue('alpha')
+
+    await waitFor(() => {
+      const text = wrapper.text()
+      return text.includes('search-alpha') && !text.includes('search-beta')
+    })
+    expect(wrapper.text()).toContain('search-alpha')
+    expect(wrapper.text()).not.toContain('search-beta')
+
+    await wrapper.get('[data-testid="data-toolbar-clear"]').trigger('click')
+
+    await waitFor(() => {
+      const text = wrapper.text()
+      return text.includes('search-alpha') && text.includes('search-beta')
+    })
+    expect(wrapper.text()).toContain('search-alpha')
+    expect(wrapper.text()).toContain('search-beta')
+  })
+
   it('renders data rows and schema details using real Evolu', async () => {
     const evolu = createTestEvolu(String(Date.now()).slice(-8))
 

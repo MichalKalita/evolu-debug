@@ -16,10 +16,10 @@
 
 ### 2) Global Search
 
-- [ ] Implement fulltext search across visible columns.
-- [ ] Add unit tests for search matching in `src/lib/utils.spec.ts`.
-- [ ] Add browser test verifying row set changes with search input.
-- [ ] Run: `npm run test:unit -- --run` and targeted browser test.
+- [x] Implement fulltext search across visible columns.
+- [x] Add unit tests for search matching in `src/lib/utils.spec.ts`.
+- [x] Add browser test verifying row set changes with search input.
+- [x] Run: `npm run test:unit -- --run` and targeted browser test.
 
 ### 3) Quick Filters
 

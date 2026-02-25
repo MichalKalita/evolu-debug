@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { String, brand, optional, union } from '@evolu/common'
 import {
   buildInsertFields,
+  filterRowsBySearch,
   formatCell,
   formatSchemaType,
   getRuntimeValueType,
@@ -89,6 +90,20 @@ describe('inferColumnDataType', () => {
     expect(inferColumnDataType(rows, 'missing')).toBe('no data')
     expect(inferColumnDataType(rows, 'title')).toBe('string')
     expect(inferColumnDataType(rows, 'payload')).toBe('mixed(bytes|null)')
+  })
+})
+
+describe('filterRowsBySearch', () => {
+  it('filters rows using visible columns and case-insensitive matching', () => {
+    const rows: RowData[] = [
+      { id: '1', title: 'Buy milk', priority: 'high' },
+      { id: '2', title: 'Read docs', priority: 'low' },
+    ]
+
+    expect(filterRowsBySearch(rows, '', ['title', 'priority']).length).toBe(2)
+    expect(filterRowsBySearch(rows, 'milk', ['title']).map((row) => row.id)).toEqual(['1'])
+    expect(filterRowsBySearch(rows, 'LOW', ['priority']).map((row) => row.id)).toEqual(['2'])
+    expect(filterRowsBySearch(rows, 'missing', ['title']).length).toBe(0)
   })
 })
 

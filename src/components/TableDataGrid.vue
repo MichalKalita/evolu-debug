@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { formatCell, type RowData } from '../lib/utils'
+import { filterRowsBySearch, formatCell, type RowData } from '../lib/utils'
 
 const props = defineProps<{
   rows: ReadonlyArray<RowData>
@@ -37,6 +37,18 @@ const clearToolbarFilters = () => {
   searchTerm.value = ''
   quickFilter.value = 'all'
 }
+
+const filteredRows = computed(() => {
+  let nextRows = [...props.rows]
+
+  if (quickFilter.value === 'active') {
+    nextRows = nextRows.filter((row) => row.isDeleted !== 1)
+  } else if (quickFilter.value === 'deleted') {
+    nextRows = nextRows.filter((row) => row.isDeleted === 1)
+  }
+
+  return filterRowsBySearch(nextRows, searchTerm.value, columns.value)
+})
 </script>
 
 <template>
@@ -62,7 +74,9 @@ const clearToolbarFilters = () => {
         Clear
       </button>
 
-      <span class="toolbar-count" data-testid="data-toolbar-count">Rows: {{ props.rows.length }}</span>
+      <span class="toolbar-count" data-testid="data-toolbar-count">
+        Rows: {{ filteredRows.length }} / {{ props.rows.length }}
+      </span>
     </div>
 
     <table>
@@ -73,7 +87,7 @@ const clearToolbarFilters = () => {
       </thead>
       <tbody>
         <tr
-          v-for="(row, rowIndex) in props.rows"
+          v-for="(row, rowIndex) in filteredRows"
           :key="rowIndex"
           :class="{ 'editable-row': isRowEditable(row) }"
           @click="isRowEditable(row) && emit('edit-row', row)"

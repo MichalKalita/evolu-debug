@@ -75,6 +75,19 @@ export const formatCell = (value: unknown): string => {
   return String(value)
 }
 
+export const filterRowsBySearch = (
+  rows: ReadonlyArray<RowData>,
+  searchTerm: string,
+  columns: ReadonlyArray<string>,
+): RowData[] => {
+  const needle = searchTerm.trim().toLowerCase()
+  if (needle.length === 0) return [...rows]
+
+  return rows.filter((row) =>
+    columns.some((column) => formatCell(row[column]).toLowerCase().includes(needle)),
+  )
+}
+
 export const getRuntimeValueType = (value: unknown): string => {
   if (value === null) return 'null'
   if (value === undefined) return 'undefined'
