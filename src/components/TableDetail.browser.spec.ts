@@ -67,6 +67,35 @@ afterEach(() => {
 })
 
 describe('TableDetail (browser, real Evolu)', () => {
+  it('renders data toolbar in data tab', async () => {
+    const evolu = createTestEvolu(String(Date.now() + 5).slice(-8))
+
+    evolu.insert('debugRow', {
+      title: 'toolbar-row',
+      mode: 'low',
+      blob: null,
+    })
+
+    const wrapper = mount(TableDetail, {
+      props: { tableName: 'debugRow' },
+      global: {
+        provide: {
+          [EvoluContext as symbol]: evolu,
+          [EvoluDebugSchemaContext as symbol]: schema,
+        },
+      },
+    })
+
+    cleanup = () => wrapper.unmount()
+
+    await waitFor(() => wrapper.text().includes('toolbar-row'))
+
+    expect(wrapper.find('[data-testid="data-toolbar-search"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="data-toolbar-filter"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="data-toolbar-clear"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="data-toolbar-count"]').text()).toContain('Rows:')
+  })
+
   it('renders data rows and schema details using real Evolu', async () => {
     const evolu = createTestEvolu(String(Date.now()).slice(-8))
 
