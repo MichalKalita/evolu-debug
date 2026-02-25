@@ -23,6 +23,7 @@
   ],
   "files": [
     "dist",
+    "example",
     "src/main.ts",
     "README.md",
     "LICENSE"
@@ -36,7 +37,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "dev:example": "vite --open /examples/shadow-dom/index.html",
+    "dev:example": "vite --open /example/index.html",
     "build": "run-p type-check \"build-only {@}\" --",
     "prepublishOnly": "npm run build && npm run test:unit -- --run src/__tests__/main.spec.ts",
     "preview": "vite preview",
