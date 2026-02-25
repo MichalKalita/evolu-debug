@@ -1,6 +1,6 @@
 {
   "name": "evolu-debug",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Debug tool for inspecting Evolu tables",
   "license": "MIT",
   "author": "Michal Kalita <kalita.michal@gmail.com>",
