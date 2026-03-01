@@ -37,3 +37,6 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
+
+# This project is library, can be installed with any dependencies
+pnpm-lock.yaml

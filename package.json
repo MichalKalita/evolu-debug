@@ -36,9 +36,13 @@
     }
   },
   "scripts": {
+    "changeset": "changeset",
+    "changeset:version": "changeset version",
+    "changeset:publish": "changeset publish",
     "dev": "vite",
     "dev:example": "vite --open /example/index.html",
     "build": "run-p type-check \"build-only {@}\" --",
+    "verify": "npm run type-check && npm run test:unit -- --run src/__tests__/main.spec.ts && npm run build-only",
     "prepublishOnly": "npm run build && npm run test:unit -- --run src/__tests__/main.spec.ts",
     "preview": "vite preview",
     "test:unit": "vitest",
@@ -58,6 +62,7 @@
     "vue": "^3.5.28"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.29.7",
     "@evolu/web": "^2.4.0",
     "@tsconfig/node24": "^24.0.4",
     "@types/jsdom": "^27.0.0",
@@ -88,7 +93,11 @@
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
   },
-  "publishConfig": {
-    "access": "public"
+  "packageManager": "pnpm@10.30.0",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "msgpackr-extract"
+    ]
   }
 }
